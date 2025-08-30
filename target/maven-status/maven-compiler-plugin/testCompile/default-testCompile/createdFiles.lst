@@ -1,0 +1,4 @@
+StepDefinitions/RegistrationSteps.class
+MyTestRunner/TestRunner.class
+StepDefinitions/ProfileSteps.class
+StepDefinitions/LoginSteps.class
