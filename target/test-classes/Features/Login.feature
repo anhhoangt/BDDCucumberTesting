@@ -1,61 +1,62 @@
-Feature: Login Application feature
+Feature: GitHub REST API Testing
 
-Scenario: Successful User Login
-	Given User is on Application Home Page
-	When Application Page Title is FREE CRM
-	Then user enters valid username and password
-	And user clicks on Login Button
-	Then User should be redirected to Dashboard
-	And User should see welcome message
+Background:
+	Given I have a valid GitHub API token
+	And I set the base URI to "https://api.github.com"
 
-Scenario: Login with Invalid Credentials
-	Given User is on Application Home Page
-	When Application Page Title is FREE CRM
-	Then user enters invalid username and password
-	And user clicks on Login Button
-	Then User should see error message "Invalid credentials"
-	And User should remain on login page
+Scenario: GET - Retrieve authenticated user information
+	When I send a GET request to "/user"
+	Then the response status code should be 200
+	And the response should contain user information
+	And the response should have "login" field
+	And the response should have "id" field
 
-Scenario: Login with Empty Username
-	Given User is on Application Home Page
-	When Application Page Title is FREE CRM
-	Then user enters empty username and valid password
-	And user clicks on Login Button
-	Then User should see error message "Username is required"
+Scenario: GET - Retrieve a specific repository
+	Given I have a repository "anhhoangt/BDDCucumber"
+	When I send a GET request to "/repos/anhhoangt/BDDCucumber"
+	Then the response status code should be 200
+	And the response should contain repository information
+	And the response should have "name" field with value "BDDCucumber"
+	And the response should have "owner" field
 
-Scenario: Login with Empty Password
-	Given User is on Application Home Page
-	When Application Page Title is FREE CRM
-	Then user enters valid username and empty password
-	And user clicks on Login Button
-	Then User should see error message "Password is required"
+Scenario: GET - Retrieve non-existent repository
+	When I send a GET request to "/repos/nonexistent/repository"
+	Then the response status code should be 404
+	And the response should contain error message
 
-Scenario: Forgot Password Functionality
-	Given User is on Application Home Page
-	When User clicks on "Forgot Password" link
-	Then User should be redirected to password reset page
-	When User enters valid email address
-	And User clicks on "Send Reset Link" button
-	Then User should see confirmation message "Reset link sent to your email"
+Scenario: POST - Create a new repository
+	Given I have repository data:
+		| name | test-repo-api |
+		| description | Test repository created via API |
+		| private | false |
+	When I send a POST request to "/user/repos" with the repository data
+	Then the response status code should be 201
+	And the response should contain "name" field with value "test-repo-api"
+	And the response should contain "description" field
+	And the created repository should exist
 
-Scenario: Remember Me Functionality
-	Given User is on Application Home Page
-	When user enters valid username and password
-	And User checks "Remember Me" checkbox
-	And user clicks on Login Button
-	Then User should be redirected to Dashboard
-	When User closes browser and reopens application
-	Then User should still be logged in
+Scenario: POST - Create repository with invalid data
+	Given I have invalid repository data:
+		| name | |
+		| description | Repository with empty name |
+	When I send a POST request to "/user/repos" with the repository data
+	Then the response status code should be 422
+	And the response should contain validation errors
 
-Scenario Outline: Login with Multiple Invalid Credentials
-	Given User is on Application Home Page
-	When user enters username "<username>" and password "<password>"
-	And user clicks on Login Button
-	Then User should see error message "<error_message>"
+Scenario: PATCH - Update repository information
+	Given I have an existing repository "test-repo-api"
+	And I have update data:
+		| description | Updated description via API |
+		| private | true |
+	When I send a PATCH request to "/repos/{owner}/test-repo-api" with the update data
+	Then the response status code should be 200
+	And the response should contain "description" field with value "Updated description via API"
+	And the response should contain "private" field with value "true"
 
-	Examples:
-		| username | password | error_message |
-		| invalid_user | valid_pass | Invalid username |
-		| valid_user | invalid_pass | Invalid password |
-		| | | Username and password are required |
-		| admin | 123 | Password too short |
+Scenario: DELETE - Delete a repository
+	Given I have an existing repository "test-repo-api"
+	When I send a DELETE request to "/repos/{owner}/test-repo-api"
+	Then the response status code should be 204
+	And the repository should no longer exist
+	When I send a GET request to "/repos/{owner}/test-repo-api"
+	Then the response status code should be 404

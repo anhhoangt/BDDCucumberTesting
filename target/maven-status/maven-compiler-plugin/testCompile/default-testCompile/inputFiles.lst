@@ -1,4 +1,4 @@
 /Users/anhthehoang/Desktop/learning-code/BDDCucumber/BDDCucumberTesting/src/test/java/MyTestRunner/TestRunner.java
-/Users/anhthehoang/Desktop/learning-code/BDDCucumber/BDDCucumberTesting/src/test/java/StepDefinitions/LoginSteps.java
-/Users/anhthehoang/Desktop/learning-code/BDDCucumber/BDDCucumberTesting/src/test/java/StepDefinitions/ProfileSteps.java
-/Users/anhthehoang/Desktop/learning-code/BDDCucumber/BDDCucumberTesting/src/test/java/StepDefinitions/RegistrationSteps.java
+/Users/anhthehoang/Desktop/learning-code/BDDCucumber/BDDCucumberTesting/src/test/java/StepDefinitions/GitHubAPISteps.java
+/Users/anhthehoang/Desktop/learning-code/BDDCucumber/BDDCucumberTesting/src/test/java/StepDefinitions/GitHubIssuesAPISteps.java
+/Users/anhthehoang/Desktop/learning-code/BDDCucumber/BDDCucumberTesting/src/test/java/StepDefinitions/GitHubRepositoryAPISteps.java
