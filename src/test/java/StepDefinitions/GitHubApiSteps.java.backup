@@ -1,0 +1,86 @@
+package StepDefinitions;
+
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.When;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.And;
+import io.restassured.RestAssured;
+import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
+import io.restassured.config.RestAssuredConfig;
+import io.restassured.config.HttpClientConfig;
+import static io.restassured.RestAssured.*;
+import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.*;
+
+public class GitHubApiSteps {
+
+    private RequestSpecification request;
+    private Response response;
+    private String baseUri;
+    private String authToken;
+
+    @Given("I have a valid GitHub API token")
+    public void i_have_a_valid_github_api_token() {
+        // You can set your GitHub token here or use environment variable
+        // For testing purposes, using a placeholder - replace with actual token
+        authToken = System.getProperty("github.token");
+        if (authToken == null || authToken.isEmpty()) {
+            // Check environment variable
+            authToken = System.getenv("GITHUB_TOKEN");
+        }
+        if (authToken == null || authToken.isEmpty()) {
+            // For demo purposes - in real scenario, get from environment or config
+            authToken = "your_github_token_here";
+            System.out.println("WARNING: Using placeholder token. Set GITHUB_TOKEN environment variable or github.token system property for real testing.");
+        }
+        
+        // Configure RestAssured to handle HTTPS connections properly
+        RestAssured.config = RestAssuredConfig.config()
+            .httpClient(HttpClientConfig.httpClientConfig()
+                .setParam("http.connection.timeout", 5000)
+                .setParam("http.socket.timeout", 10000));
+        
+        System.out.println("Using GitHub token: " + authToken.substring(0, 10) + "...");
+        
+        request = RestAssured.given()
+            .relaxedHTTPSValidation()
+            .header("Authorization", "Bearer " + authToken)
+            .header("Accept", "application/vnd.github.v3+json")
+            .header("User-Agent", "BDD-Cucumber-Testing");
+    }
+
+    @And("I set the base URI to {string}")
+    public void i_set_the_base_uri_to(String uri) {
+        baseUri = uri;
+        RestAssured.baseURI = baseUri;
+    }
+
+    @When("I send a GET request to {string}")
+    public void i_send_a_get_request_to(String endpoint) {
+        response = request.when().get(endpoint);
+    }
+
+    @Then("the response status code should be {int}")
+    public void the_response_status_code_should_be(int expectedStatusCode) {
+        assertEquals("Status code mismatch", expectedStatusCode, response.getStatusCode());
+    }
+
+    @And("the response should contain user information")
+    public void the_response_should_contain_user_information() {
+        // Verify that the response contains basic user information
+        assertNotNull("Response body should not be null", response.getBody());
+        assertFalse("Response body should not be empty", response.getBody().asString().isEmpty());
+
+        // Verify JSON structure
+        response.then().assertThat()
+            .body("$", instanceOf(java.util.Map.class));
+    }
+
+    @And("the response should have {string} field")
+    public void the_response_should_have_field(String fieldName) {
+        response.then().assertThat()
+            .body(fieldName, notNullValue())
+            .body(fieldName, not(emptyString()));
+    }
+}

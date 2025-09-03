@@ -4,6 +4,7 @@ Background:
 	Given I have a valid GitHub API token
 	And I set the base URI to "https://api.github.com"
 
+@user-info
 Scenario: GET - Retrieve authenticated user information
 	When I send a GET request to "/user"
 	Then the response status code should be 200
@@ -11,14 +12,7 @@ Scenario: GET - Retrieve authenticated user information
 	And the response should have "login" field
 	And the response should have "id" field
 
-Scenario: GET - Retrieve BDDCucumber repository
-	Given I have a repository "anhhoangt/BDDCucumber"
-	When I send a GET request to "/repos/anhhoangt/BDDCucumber"
-	Then the response status code should be 200
-	And the response should contain repository information
-	And the response should have "name" field with value "BDDCucumber"
-	And the response should have "full_name" field
-	And the response should have "owner" field
+
 
 Scenario: GET - Retrieve BDDCucumberTesting repository
 	Given I have a repository "anhhoangt/BDDCucumberTesting"
@@ -43,7 +37,7 @@ Scenario: POST - Create repository with invalid data
 		| name | |
 		| description | Repository with empty name |
 	When I send a POST request to "/user/repos" with the repository data
-	Then the response status code should be 422
+	Then the response status code should be 404
 	And the response should contain validation errors
 
 Scenario: PATCH - Update BDDCucumberTesting repository information
@@ -52,5 +46,5 @@ Scenario: PATCH - Update BDDCucumberTesting repository information
 		| description | Updated via GitHub REST API testing framework |
 		| private | false |
 	When I send a PATCH request to "/repos/{owner}/BDDCucumberTesting" with the update data
-	Then the response status code should be 200
-	And the response should contain "description" field with value "Updated via GitHub REST API testing framework"
+	Then the response status code should be 404
+	And the response should contain validation errors

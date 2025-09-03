@@ -1,1 +1,18 @@
 /.metadata/
+
+# Maven
+target/
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test reports that may contain sensitive data
+**/surefire-reports/
+**/test-output/
