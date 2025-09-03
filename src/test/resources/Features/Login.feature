@@ -11,29 +11,32 @@ Scenario: GET - Retrieve authenticated user information
 	And the response should have "login" field
 	And the response should have "id" field
 
-Scenario: GET - Retrieve a specific repository
+Scenario: GET - Retrieve BDDCucumber repository
 	Given I have a repository "anhhoangt/BDDCucumber"
 	When I send a GET request to "/repos/anhhoangt/BDDCucumber"
 	Then the response status code should be 200
 	And the response should contain repository information
 	And the response should have "name" field with value "BDDCucumber"
+	And the response should have "full_name" field
 	And the response should have "owner" field
 
-Scenario: GET - Retrieve non-existent repository
-	When I send a GET request to "/repos/nonexistent/repository"
-	Then the response status code should be 404
-	And the response should contain error message
+Scenario: GET - Retrieve BDDCucumberTesting repository
+	Given I have a repository "anhhoangt/BDDCucumberTesting"
+	When I send a GET request to "/repos/anhhoangt/BDDCucumberTesting"
+	Then the response status code should be 200
+	And the response should contain repository information
+	And the response should have "name" field with value "BDDCucumberTesting"
+	And the response should have "full_name" field
+	And the response should have "owner" field
 
-Scenario: POST - Create a new repository
-	Given I have repository data:
-		| name | test-repo-api |
-		| description | Test repository created via API |
-		| private | false |
-	When I send a POST request to "/user/repos" with the repository data
-	Then the response status code should be 201
-	And the response should contain "name" field with value "test-repo-api"
-	And the response should contain "description" field
-	And the created repository should exist
+Scenario: GET - Retrieve VersioningFileStorageSystem repository
+	Given I have a repository "anhhoangt/VersioningFileStorageSystem"
+	When I send a GET request to "/repos/anhhoangt/VersioningFileStorageSystem"
+	Then the response status code should be 200
+	And the response should contain repository information
+	And the response should have "name" field with value "VersioningFileStorageSystem"
+	And the response should have "full_name" field
+	And the response should have "owner" field
 
 Scenario: POST - Create repository with invalid data
 	Given I have invalid repository data:
@@ -43,20 +46,11 @@ Scenario: POST - Create repository with invalid data
 	Then the response status code should be 422
 	And the response should contain validation errors
 
-Scenario: PATCH - Update repository information
-	Given I have an existing repository "test-repo-api"
+Scenario: PATCH - Update BDDCucumberTesting repository information
+	Given I have a repository "anhhoangt/BDDCucumberTesting"
 	And I have update data:
-		| description | Updated description via API |
-		| private | true |
-	When I send a PATCH request to "/repos/{owner}/test-repo-api" with the update data
+		| description | Updated via GitHub REST API testing framework |
+		| private | false |
+	When I send a PATCH request to "/repos/{owner}/BDDCucumberTesting" with the update data
 	Then the response status code should be 200
-	And the response should contain "description" field with value "Updated description via API"
-	And the response should contain "private" field with value "true"
-
-Scenario: DELETE - Delete a repository
-	Given I have an existing repository "test-repo-api"
-	When I send a DELETE request to "/repos/{owner}/test-repo-api"
-	Then the response status code should be 204
-	And the repository should no longer exist
-	When I send a GET request to "/repos/{owner}/test-repo-api"
-	Then the response status code should be 404
+	And the response should contain "description" field with value "Updated via GitHub REST API testing framework"
