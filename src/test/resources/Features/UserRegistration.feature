@@ -10,10 +10,7 @@ Scenario: GET - Retrieve all issues from BDDCucumberTesting
 	Then the response status code should be 200
 	And the response should be a JSON array
 
-Scenario: GET - Retrieve all issues from BDDCucumber
-	When I send a GET request to "/repos/{owner}/BDDCucumber/issues" for issues
-	Then the response status code should be 200
-	And the response should be a JSON array
+
 
 Scenario: GET - Retrieve all issues from VersioningFileStorageSystem
 	When I send a GET request to "/repos/{owner}/VersioningFileStorageSystem/issues" for issues

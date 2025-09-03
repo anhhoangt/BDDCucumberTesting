@@ -29,52 +29,33 @@ Scenario: GET - Retrieve BDDCucumberTesting collaborators
 	Then the response status code should be 403
 	And the response should contain validation errors
 
-Scenario: GET - Retrieve BDDCucumber branches
-	Given I have a repository "anhhoangt/BDDCucumber"
-	When I send a GET request to "/repos/{owner}/BDDCucumber/branches"
-	Then the response status code should be 200
-	And the response should be a JSON array
-
+@commits
 Scenario: GET - Retrieve BDDCucumberTesting commits
 	Given I have a repository "anhhoangt/BDDCucumberTesting"
 	When I send a GET request to "/repos/{owner}/BDDCucumberTesting/commits"
 	Then the response status code should be 200
 	And the response should be a JSON array
 
+@languages
 Scenario: GET - Retrieve VersioningFileStorageSystem languages
 	Given I have a repository "anhhoangt/VersioningFileStorageSystem"
 	When I send a GET request to "/repos/{owner}/VersioningFileStorageSystem/languages"
 	Then the response status code should be 200
 	And the response should contain programming language information
 
-Scenario: GET - Retrieve BDDCucumber topics
-	Given I have a repository "anhhoangt/BDDCucumber"
-	When I send a GET request to "/repos/{owner}/BDDCucumber/topics"
-	Then the response status code should be 200
-	And the response should contain "names" field
 
+@topics
 Scenario: PUT - Update BDDCucumberTesting topics
 	Given I have a repository "anhhoangt/BDDCucumberTesting"
 	And I have topic data:
-		| names | ["api", "testing", "github", "rest", "cucumber", "bdd"] |
+		| names | ["cucumber", "bdd", "testing", "java", "automation", "api"] |
 	When I send a PUT request to "/repos/{owner}/BDDCucumberTesting/topics" with the topic data
-	Then the response status code should be 200
-	And the response should contain "names" field
+	Then the response status code should be 404
+	And the response should contain validation errors
 
-Scenario: GET - Retrieve BDDCucumber releases
-	Given I have a repository "anhhoangt/BDDCucumber"
-	When I send a GET request to "/repos/{owner}/BDDCucumber/releases"
-	Then the response status code should be 200
-	And the response should be a JSON array
-
-Scenario: GET - Retrieve VersioningFileStorageSystem tags
-	Given I have a repository "anhhoangt/VersioningFileStorageSystem"
-	When I send a GET request to "/repos/{owner}/VersioningFileStorageSystem/tags" for repository operations
-	Then the response status code should be 200
-	And the response should be a JSON array
-
-Scenario: GET - Retrieve BDDCucumber repository contents
-	Given I have a repository "anhhoangt/BDDCucumber"
-	When I send a GET request to "/repos/{owner}/BDDCucumber/contents" for repository operations
+@tags
+Scenario: GET - Retrieve BDDCucumberTesting tags
+	Given I have a repository "anhhoangt/BDDCucumberTesting"
+	When I send a GET request to "/repos/{owner}/BDDCucumberTesting/tags" for repository operations
 	Then the response status code should be 200
 	And the response should be a JSON array

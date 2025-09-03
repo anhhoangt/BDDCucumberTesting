@@ -6,10 +6,9 @@ import io.cucumber.junit.CucumberOptions;
 
 @RunWith(Cucumber.class)
 @CucumberOptions (
-		features = "src/test/resources/Features/UserProfile.feature",
+		features = {"src/test/resources/Features/Login.feature", "src/test/resources/Features/UserProfile.feature"},
 		glue= {"StepDefinitions"},
-		plugin= {"pretty", "html:test-output"},
-		tags = "@collaborators"
+		plugin= {"pretty", "html:test-output", "json:target/cucumber-reports/Cucumber.json"}
 		)
 
 public class TestRunner {

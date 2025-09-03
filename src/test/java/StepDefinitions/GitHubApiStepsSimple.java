@@ -26,6 +26,7 @@ public class GitHubApiStepsSimple {
     private String repositoryName;
     private Map<String, Object> repositoryData;
     private Map<String, Object> updateData;
+    private Map<String, Object> topicData;
 
     @Given("I have a valid GitHub API token")
     public void i_have_a_valid_github_api_token() {
@@ -380,4 +381,133 @@ public class GitHubApiStepsSimple {
               fail("Response body is not valid JSON: " + e.getMessage());
           }
       }
+    // Programming languages validation for repository languages endpoint
+    @And("the response should contain programming language information")
+    public void the_response_should_contain_programming_language_information() {
+        // Verify that the response contains programming language information
+        assertNotNull("Response should not be null", response);
+        assertNotNull("Response body should not be null", response.body());
+        assertFalse("Response body should not be empty", response.body().isEmpty());
+
+        try {
+            JsonNode jsonNode = objectMapper.readTree(response.body());
+            assertTrue("Response should be a JSON object", jsonNode.isObject());
+
+            // Check if the response contains language data (key-value pairs where keys are language names)
+            assertTrue("Response should contain at least one programming language", jsonNode.size() > 0);
+
+            System.out.println("Programming languages detected ✓");
+            System.out.println("Languages found:");
+
+            // Log all languages and their byte counts
+            jsonNode.fieldNames().forEachRemaining(languageName -> {
+                JsonNode byteCount = jsonNode.get(languageName);
+                System.out.println("  - " + languageName + ": " + byteCount.asLong() + " bytes");
+            });
+
+        } catch (Exception e) {
+            fail("Response body is not valid JSON: " + e.getMessage());
+        }
+    }
+
+    // Topics-related step definitions for repository topics management
+    @Given("I have topic data:")
+    public void i_have_topic_data(DataTable dataTable) {
+        topicData = new HashMap<>();
+        Map<String, String> data = dataTable.asMap(String.class, String.class);
+        for (Map.Entry<String, String> entry : data.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
+
+            // Handle JSON array string for topics names
+            if ("names".equals(key) && value.startsWith("[") && value.endsWith("]")) {
+                try {
+                    // Parse the JSON array string to actual array
+                    JsonNode arrayNode = objectMapper.readTree(value);
+                    String[] topics = new String[arrayNode.size()];
+                    for (int i = 0; i < arrayNode.size(); i++) {
+                        topics[i] = arrayNode.get(i).asText();
+                    }
+                    topicData.put(key, topics);
+                } catch (Exception e) {
+                    System.err.println("Error parsing topics array: " + e.getMessage());
+                    topicData.put(key, value);
+                }
+            } else {
+                topicData.put(key, value);
+            }
+        }
+        System.out.println("Topic data: " + topicData);
+    }
+
+    @When("I send a PUT request to {string} with the topic data")
+    public void i_send_a_put_request_with_topic_data(String endpoint) {
+        try {
+            // Replace {owner} placeholder with actual owner from repository name
+            String actualEndpoint = endpoint;
+            if (endpoint.contains("{owner}") && repositoryName != null) {
+                String owner = repositoryName.split("/")[0];
+                actualEndpoint = endpoint.replace("{owner}", owner);
+            }
+
+            String fullUrl = baseUri + actualEndpoint;
+            System.out.println("Sending PUT request to: " + fullUrl);
+
+            String jsonBody = objectMapper.writeValueAsString(topicData);
+            System.out.println("Request body: " + jsonBody);
+
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(fullUrl))
+                .header("Authorization", "Bearer " + authToken)
+                .header("Accept", "application/vnd.github.v3+json")
+                .header("Content-Type", "application/json")
+                .header("User-Agent", "BDD-Cucumber-Testing")
+                .method("PUT", HttpRequest.BodyPublishers.ofString(jsonBody))
+                .build();
+
+            response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            System.out.println("Response status: " + response.statusCode());
+            System.out.println("Response body: " + response.body());
+
+        } catch (Exception e) {
+            System.err.println("Error sending PUT request: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to send PUT request", e);
+        }
+    }
+
+    // Repository tags-related step definitions
+    @When("I send a GET request to {string} for repository operations")
+    public void i_send_a_get_request_for_repository_operations(String endpoint) {
+        try {
+            // Replace {owner} placeholder with actual owner from repository name
+            String actualEndpoint = endpoint;
+            if (endpoint.contains("{owner}") && repositoryName != null) {
+                String owner = repositoryName.split("/")[0];
+                actualEndpoint = endpoint.replace("{owner}", owner);
+            }
+
+            String fullUrl = baseUri + actualEndpoint;
+            System.out.println("Sending GET request for repository operations to: " + fullUrl);
+
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(fullUrl))
+                .header("Authorization", "Bearer " + authToken)
+                .header("Accept", "application/vnd.github.v3+json")
+                .header("User-Agent", "BDD-Cucumber-Testing")
+                .GET()
+                .build();
+
+            response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            System.out.println("Response status: " + response.statusCode());
+            System.out.println("Response body: " + response.body());
+
+        } catch (Exception e) {
+            System.err.println("Error sending GET request for repository operations: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to send GET request", e);
+        }
+    }
 }
