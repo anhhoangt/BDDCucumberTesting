@@ -510,4 +510,45 @@ public class GitHubApiStepsSimple {
             throw new RuntimeException("Failed to send GET request", e);
         }
     }
+
+    // Issues API-related step definitions
+    @And("I have a test repository {string}")
+    public void i_have_a_test_repository(String repoName) {
+        // Set the repository name for {owner} replacement in issues endpoints
+        this.repositoryName = "anhhoangt/" + repoName;
+        System.out.println("Testing issues for repository: " + this.repositoryName);
+    }
+
+    @When("I send a GET request to {string} for issues")
+    public void i_send_a_get_request_for_issues(String endpoint) {
+        try {
+            // Replace {owner} placeholder with actual owner from repository name
+            String actualEndpoint = endpoint;
+            if (endpoint.contains("{owner}") && repositoryName != null) {
+                String owner = repositoryName.split("/")[0];
+                actualEndpoint = endpoint.replace("{owner}", owner);
+            }
+
+            String fullUrl = baseUri + actualEndpoint;
+            System.out.println("Sending GET request for issues to: " + fullUrl);
+
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(fullUrl))
+                .header("Authorization", "Bearer " + authToken)
+                .header("Accept", "application/vnd.github.v3+json")
+                .header("User-Agent", "BDD-Cucumber-Testing")
+                .GET()
+                .build();
+
+            response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            System.out.println("Response status: " + response.statusCode());
+            System.out.println("Response body: " + response.body());
+
+        } catch (Exception e) {
+            System.err.println("Error sending GET request for issues: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to send GET request", e);
+        }
+    }
 }

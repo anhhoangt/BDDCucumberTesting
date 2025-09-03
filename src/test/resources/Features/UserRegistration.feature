@@ -5,6 +5,7 @@ Background:
 	And I set the base URI to "https://api.github.com"
 	And I have a test repository "BDDCucumberTesting"
 
+@issues
 Scenario: GET - Retrieve all issues from BDDCucumberTesting
 	When I send a GET request to "/repos/{owner}/BDDCucumberTesting/issues" for issues
 	Then the response status code should be 200
