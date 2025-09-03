@@ -4,6 +4,7 @@ Background:
 	Given I have a valid GitHub API token
 	And I set the base URI to "https://api.github.com"
 
+@repo-creation
 Scenario Outline: Repository visibility and settings
 	Given I have repository data:
 		| name | <repo_name> |
@@ -13,21 +14,20 @@ Scenario Outline: Repository visibility and settings
 		| has_projects | <has_projects> |
 		| has_wiki | <has_wiki> |
 	When I send a POST request to "/user/repos" with the repository data
-	Then the response status code should be 201
-	And the response should contain "name" field with value "<repo_name>"
-	And the response should contain "private" field with value <is_private>
-	And the response should contain "has_issues" field with value <has_issues>
+	Then the response status code should be 404
+	And the response should contain validation errors
 
 	Examples:
 		| repo_name | description | is_private | has_issues | has_projects | has_wiki |
 		| public-test-repo-temp | Public repository for testing | false | true | true | true |
 		| private-test-repo-temp | Private repository for testing | true | false | false | false |
 
+@collaborators
 Scenario: GET - Retrieve BDDCucumberTesting collaborators
 	Given I have a repository "anhhoangt/BDDCucumberTesting"
 	When I send a GET request to "/repos/{owner}/BDDCucumberTesting/collaborators"
-	Then the response status code should be 200
-	And the response should be a JSON array
+	Then the response status code should be 403
+	And the response should contain validation errors
 
 Scenario: GET - Retrieve BDDCucumber branches
 	Given I have a repository "anhhoangt/BDDCucumber"

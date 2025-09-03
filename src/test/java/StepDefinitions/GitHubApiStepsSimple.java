@@ -60,7 +60,14 @@ public class GitHubApiStepsSimple {
     @When("I send a GET request to {string}")
     public void i_send_a_get_request_to(String endpoint) {
         try {
-            String fullUrl = baseUri + endpoint;
+            // Replace {owner} placeholder with actual owner from repository name
+            String actualEndpoint = endpoint;
+            if (endpoint.contains("{owner}") && repositoryName != null) {
+                String owner = repositoryName.split("/")[0];
+                actualEndpoint = endpoint.replace("{owner}", owner);
+            }
+
+            String fullUrl = baseUri + actualEndpoint;
             System.out.println("Sending GET request to: " + fullUrl);
 
             HttpRequest request = HttpRequest.newBuilder()
@@ -168,6 +175,24 @@ public class GitHubApiStepsSimple {
     }
 
     // POST and PATCH request support
+    @Given("I have repository data:")
+    public void i_have_repository_data(DataTable dataTable) {
+        repositoryData = new HashMap<>();
+        Map<String, String> data = dataTable.asMap(String.class, String.class);
+        for (Map.Entry<String, String> entry : data.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
+
+            // Convert string values to appropriate types
+            if ("private".equals(key) || "has_issues".equals(key) || "has_projects".equals(key) || "has_wiki".equals(key)) {
+                repositoryData.put(key, Boolean.parseBoolean(value));
+            } else {
+                repositoryData.put(key, value);
+            }
+        }
+        System.out.println("Repository data: " + repositoryData);
+    }
+
     @Given("I have invalid repository data:")
     public void i_have_invalid_repository_data(DataTable dataTable) {
         repositoryData = new HashMap<>();
@@ -276,4 +301,83 @@ public class GitHubApiStepsSimple {
             fail("Response body is not valid JSON: " + e.getMessage());
         }
     }
+
+    // Boolean field validation for repository settings
+    @And("the response should contain {string} field with value true")
+    public void the_response_should_contain_field_with_value_true(String fieldName) {
+        try {
+            JsonNode jsonNode = objectMapper.readTree(response.body());
+            assertTrue("Field '" + fieldName + "' should exist", jsonNode.has(fieldName));
+            JsonNode fieldValue = jsonNode.get(fieldName);
+            assertNotNull("Field '" + fieldName + "' should not be null", fieldValue);
+
+            assertTrue("Field '" + fieldName + "' should be true", fieldValue.asBoolean());
+
+            System.out.println("Field '" + fieldName + "': " + fieldValue + " ✓");
+
+        } catch (Exception e) {
+            fail("Error parsing JSON response: " + e.getMessage());
+        }
+    }
+
+    @And("the response should contain {string} field with value false")
+    public void the_response_should_contain_field_with_value_false(String fieldName) {
+        try {
+            JsonNode jsonNode = objectMapper.readTree(response.body());
+            assertTrue("Field '" + fieldName + "' should exist", jsonNode.has(fieldName));
+            JsonNode fieldValue = jsonNode.get(fieldName);
+            assertNotNull("Field '" + fieldName + "' should not be null", fieldValue);
+
+            assertFalse("Field '" + fieldName + "' should be false", fieldValue.asBoolean());
+
+            System.out.println("Field '" + fieldName + "': " + fieldValue + " ✓");
+
+        } catch (Exception e) {
+            fail("Error parsing JSON response: " + e.getMessage());
+        }
+    }
+
+      // Generic boolean field validation that handles both true and false
+      @And("the response should contain {string} field with value {word}")
+      public void the_response_should_contain_field_with_boolean_value(String fieldName, String expectedValue) {
+          try {
+              JsonNode jsonNode = objectMapper.readTree(response.body());
+              assertTrue("Field '" + fieldName + "' should exist", jsonNode.has(fieldName));
+              JsonNode fieldValue = jsonNode.get(fieldName);
+              assertNotNull("Field '" + fieldName + "' should not be null", fieldValue);
+
+              boolean expectedBoolean = Boolean.parseBoolean(expectedValue);
+              assertEquals("Field '" + fieldName + "' should have value " + expectedValue,
+                          expectedBoolean, fieldValue.asBoolean());
+
+              System.out.println("Field '" + fieldName + "': " + fieldValue + " ✓");
+
+          } catch (Exception e) {
+              fail("Error parsing JSON response: " + e.getMessage());
+          }
+      }
+
+      // Additional step definitions for collaborators and array responses
+      @And("the response should be a JSON array")
+      public void the_response_should_be_a_json_array() {
+          // Verify that the response is a valid JSON array
+          assertNotNull("Response should not be null", response);
+          assertNotNull("Response body should not be null", response.body());
+          assertFalse("Response body should not be empty", response.body().isEmpty());
+
+          try {
+              JsonNode jsonNode = objectMapper.readTree(response.body());
+              assertTrue("Response should be a JSON array", jsonNode.isArray());
+
+              System.out.println("Response is a valid JSON array with " + jsonNode.size() + " elements ✓");
+
+              // Log first few elements for debugging
+              for (int i = 0; i < Math.min(3, jsonNode.size()); i++) {
+                  System.out.println("Array element " + i + ": " + jsonNode.get(i));
+              }
+
+          } catch (Exception e) {
+              fail("Response body is not valid JSON: " + e.getMessage());
+          }
+      }
 }
