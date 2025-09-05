@@ -13,7 +13,9 @@ Scenario: GET - Retrieve all issues from BDDCucumberTesting
 
 
 
+@issues
 Scenario: GET - Retrieve all issues from VersioningFileStorageSystem
+	Given I have a test repository "VersioningFileStorageSystem"
 	When I send a GET request to "/repos/{owner}/VersioningFileStorageSystem/issues" for issues
 	Then the response status code should be 200
 	And the response should be a JSON array
