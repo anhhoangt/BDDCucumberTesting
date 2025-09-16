@@ -10,7 +10,7 @@ Scenario: GET - Retrieve authenticated user information
 	Then the response status code should be 200
 	And the response should contain user information
 	And the response should have "login" field
-	And the response should have "id" field..
+	And the response should have "id" field...
 
 
 
