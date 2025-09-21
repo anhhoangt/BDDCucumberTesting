@@ -48,7 +48,7 @@ Implementation Steps:
 4. Test Runner:
    - Create a `TestRunner.java` file in the `src/test/java/cucumber/Options` directory.
    - Configure the test runner to execute the feature files.
-   - AI Coding Assistant: Generate `TestRunner.java` file with the above configuration.
+   - AI Coding Assistant: Generate `TestRunner.java` file with the above configuration...
 
 5. Execution:
    - Run the `TestRunner.java` file to execute the tests.
