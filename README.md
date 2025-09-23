@@ -5,7 +5,7 @@ Tech Stack:
 - Cucumber (Behavior Driven Development framework)
 - Maven (Dependency Management)
 - Likely REST-assured (Based on common usage in similar projects, though not explicitly confirmed without pom.xml content)
-- Log4j (Logging)......
+- Log4j (Logging)........
 
 Architecture:
 - BDD (Behavior Driven Development)
