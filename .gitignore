@@ -3,6 +3,7 @@
 # Maven
 target/
 *.log
+logs/
 
 # IDE
 .idea/
@@ -16,3 +17,7 @@ Thumbs.db
 # Test reports that may contain sensitive data
 **/surefire-reports/
 **/test-output/
+
+# Environment variables
+.env
+.env.local

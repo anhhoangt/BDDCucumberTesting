@@ -56,7 +56,7 @@ Scenario Outline: Create issues with different labels in BDDCucumberTesting
 
 	Examples:
 		| title | labels |
-		| Bug report issue | ["bug"] |
-		| Feature request issue | ["enhancement"] |
-		| Documentation issue | ["documentation"] |
-		| Help wanted issue | ["help wanted"] |
+		| Bug report issue | bug |
+		| Feature request issue | enhancement |
+		| Documentation issue | documentation |
+		| Help wanted issue | help-wanted |

@@ -8,8 +8,8 @@ import io.cucumber.junit.CucumberOptions;
 @CucumberOptions (
 		features = "src/test/resources/Features/UserRegistration.feature",
 		glue= {"StepDefinitions"},
-		plugin= {"pretty", "html:test-output", "json:target/cucumber-reports/Cucumber.json"},
-		tags = "@issues"
+		plugin= {"pretty", "html:test-output", "json:target/cucumber-reports/Cucumber.json"}
+		// tags = "@issues"  // Removed to run all 9 scenarios with elevated permissions
 		)
 
 public class TestRunner {

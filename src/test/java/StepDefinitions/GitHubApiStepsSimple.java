@@ -27,6 +27,8 @@ public class GitHubApiStepsSimple {
     private Map<String, Object> repositoryData;
     private Map<String, Object> updateData;
     private Map<String, Object> topicData;
+    private Map<String, Object> issueData;
+    private String createdIssueNumber;
 
     @Given("I have a valid GitHub API token")
     public void i_have_a_valid_github_api_token() {
@@ -604,5 +606,243 @@ public class GitHubApiStepsSimple {
                 return null;
             }
         };
+    }
+
+    @When("I send a GET request to {string} with parameters:")
+    public void i_send_a_get_request_with_parameters(String endpoint, DataTable dataTable) {
+        try {
+            String actualEndpoint = endpoint;
+            if (endpoint.contains("{owner}") && repositoryName != null) {
+                String owner = repositoryName.split("/")[0];
+                actualEndpoint = endpoint.replace("{owner}", owner);
+            }
+
+            Map<String, String> params = dataTable.asMap(String.class, String.class);
+            StringBuilder queryString = new StringBuilder("?");
+            for (Map.Entry<String, String> entry : params.entrySet()) {
+                if (queryString.length() > 1) {
+                    queryString.append("&");
+                }
+                queryString.append(entry.getKey()).append("=").append(entry.getValue());
+            }
+
+            String fullUrl = baseUri + actualEndpoint + queryString.toString();
+            System.out.println("Sending GET request with parameters to: " + fullUrl);
+
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(fullUrl))
+                .header("Authorization", "Bearer " + authToken)
+                .header("Accept", "application/vnd.github.v3+json")
+                .header("User-Agent", "BDD-Cucumber-Testing")
+                .GET()
+                .build();
+
+            response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            System.out.println("Response status: " + response.statusCode());
+            System.out.println("Response body: " + response.body());
+
+        } catch (Exception e) {
+            System.err.println("Error sending GET request with parameters: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to send GET request", e);
+        }
+    }
+
+    @Given("I have issue data:")
+    public void i_have_issue_data(DataTable dataTable) {
+        issueData = new HashMap<>();
+        Map<String, String> data = dataTable.asMap(String.class, String.class);
+        for (Map.Entry<String, String> entry : data.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
+
+            if ("labels".equals(key) && value.startsWith("[") && value.endsWith("]")) {
+                try {
+                    JsonNode arrayNode = objectMapper.readTree(value);
+                    String[] labels = new String[arrayNode.size()];
+                    for (int i = 0; i < arrayNode.size(); i++) {
+                        labels[i] = arrayNode.get(i).asText();
+                    }
+                    issueData.put(key, labels);
+                } catch (Exception e) {
+                    System.err.println("Error parsing labels array: " + e.getMessage());
+                    issueData.put(key, value);
+                }
+            } else {
+                issueData.put(key, value);
+            }
+        }
+        System.out.println("Issue data: " + issueData);
+    }
+
+    @Given("I have invalid issue data:")
+    public void i_have_invalid_issue_data(DataTable dataTable) {
+        issueData = new HashMap<>();
+        Map<String, String> data = dataTable.asMap(String.class, String.class);
+        for (Map.Entry<String, String> entry : data.entrySet()) {
+            issueData.put(entry.getKey(), entry.getValue());
+        }
+        System.out.println("Invalid issue data: " + issueData);
+    }
+
+    @Given("I have issue data with title {string} and labels {string}")
+    public void i_have_issue_data_with_title_and_labels(String title, String labels) {
+        issueData = new HashMap<>();
+        issueData.put("title", title);
+        issueData.put("body", "Test issue created via API for scenario outline");
+
+        // Handle single label string or JSON array format
+        if (labels.startsWith("[") && labels.endsWith("]")) {
+            try {
+                JsonNode arrayNode = objectMapper.readTree(labels);
+                String[] labelArray = new String[arrayNode.size()];
+                for (int i = 0; i < arrayNode.size(); i++) {
+                    labelArray[i] = arrayNode.get(i).asText();
+                }
+                issueData.put("labels", labelArray);
+            } catch (Exception e) {
+                System.err.println("Error parsing labels: " + e.getMessage());
+                // Treat as single label
+                issueData.put("labels", new String[]{labels});
+            }
+        } else {
+            // Single label - convert to array
+            issueData.put("labels", new String[]{labels});
+        }
+        System.out.println("Issue data with title and labels: " + issueData);
+    }
+
+    @Then("the response should contain {string} field with value {string}")
+    public void the_response_should_contain_field_with_value_string(String fieldName, String expectedValue) {
+        try {
+            JsonNode jsonNode = objectMapper.readTree(response.body());
+            assertTrue("Field '" + fieldName + "' should exist", jsonNode.has(fieldName));
+            JsonNode fieldValue = jsonNode.get(fieldName);
+            assertNotNull("Field '" + fieldName + "' should not be null", fieldValue);
+
+            assertEquals("Field '" + fieldName + "' should have value '" + expectedValue + "'",
+                        expectedValue, fieldValue.asText());
+
+            System.out.println("Field '" + fieldName + "': " + fieldValue + " ✓");
+
+        } catch (Exception e) {
+            fail("Error parsing JSON response: " + e.getMessage());
+        }
+    }
+
+    @When("I send a POST request to {string} with the issue data")
+    public void i_send_a_post_request_with_issue_data(String endpoint) {
+        try {
+            String actualEndpoint = endpoint;
+            if (endpoint.contains("{owner}") && repositoryName != null) {
+                String owner = repositoryName.split("/")[0];
+                actualEndpoint = endpoint.replace("{owner}", owner);
+            }
+
+            String fullUrl = baseUri + actualEndpoint;
+            System.out.println("Sending POST request to create issue at: " + fullUrl);
+
+            String jsonBody = objectMapper.writeValueAsString(issueData);
+            System.out.println("Request body: " + jsonBody);
+
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(fullUrl))
+                .header("Authorization", "Bearer " + authToken)
+                .header("Accept", "application/vnd.github.v3+json")
+                .header("Content-Type", "application/json")
+                .header("User-Agent", "BDD-Cucumber-Testing")
+                .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
+                .build();
+
+            response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            System.out.println("Response status: " + response.statusCode());
+            System.out.println("Response body: " + response.body());
+
+            if (response.statusCode() == 201) {
+                try {
+                    JsonNode jsonNode = objectMapper.readTree(response.body());
+                    if (jsonNode.has("number")) {
+                        createdIssueNumber = jsonNode.get("number").asText();
+                        System.out.println("Created issue number: " + createdIssueNumber);
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error extracting issue number: " + e.getMessage());
+                }
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error sending POST request for issue: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to send POST request", e);
+        }
+    }
+
+    @And("the response should contain {string} field")
+    public void the_response_should_contain_field(String fieldName) {
+        try {
+            JsonNode jsonNode = objectMapper.readTree(response.body());
+            assertTrue("Field '" + fieldName + "' should exist", jsonNode.has(fieldName));
+            assertNotNull("Field '" + fieldName + "' should not be null", jsonNode.get(fieldName));
+
+            JsonNode fieldValue = jsonNode.get(fieldName);
+            System.out.println("Field '" + fieldName + "': " + fieldValue + " ✓");
+
+        } catch (Exception e) {
+            fail("Error parsing JSON response: " + e.getMessage());
+        }
+    }
+
+    @And("the created issue should exist")
+    public void the_created_issue_should_exist() {
+        assertNotNull("Issue number should be captured after creation", createdIssueNumber);
+
+        try {
+            String owner = repositoryName.split("/")[0];
+            String repo = repositoryName.split("/")[1];
+            String endpoint = "/repos/" + owner + "/" + repo + "/issues/" + createdIssueNumber;
+            String fullUrl = baseUri + endpoint;
+
+            System.out.println("Verifying created issue exists at: " + fullUrl);
+
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(fullUrl))
+                .header("Authorization", "Bearer " + authToken)
+                .header("Accept", "application/vnd.github.v3+json")
+                .header("User-Agent", "BDD-Cucumber-Testing")
+                .GET()
+                .build();
+
+            HttpResponse<String> verifyResponse = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            assertEquals("Created issue should be accessible", 200, verifyResponse.statusCode());
+            System.out.println("Issue verification successful ✓");
+
+        } catch (Exception e) {
+            System.err.println("Error verifying created issue: " + e.getMessage());
+            fail("Failed to verify created issue exists");
+        }
+    }
+
+    @And("the response should contain the specified labels")
+    public void the_response_should_contain_the_specified_labels() {
+        try {
+            JsonNode jsonNode = objectMapper.readTree(response.body());
+            assertTrue("Response should have 'labels' field", jsonNode.has("labels"));
+            JsonNode labelsNode = jsonNode.get("labels");
+            assertTrue("Labels should be an array", labelsNode.isArray());
+            assertTrue("Labels array should not be empty", labelsNode.size() > 0);
+
+            System.out.println("Response contains " + labelsNode.size() + " label(s) ✓");
+            for (JsonNode label : labelsNode) {
+                if (label.has("name")) {
+                    System.out.println("  - Label: " + label.get("name").asText());
+                }
+            }
+
+        } catch (Exception e) {
+            fail("Error parsing labels in response: " + e.getMessage());
+        }
     }
 }
